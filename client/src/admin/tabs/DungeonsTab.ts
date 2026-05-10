@@ -26,12 +26,12 @@ export class DungeonsTab implements Tab {
 
     const rows = dungeons.map(d => {
       const reqs = this.summarizeEntry(d.entryRequirements);
-      const actions = readOnly ? '' : `
-        <td class="admin-actions-cell">
-          <button class="admin-btn admin-btn-sm dungeon-edit-btn" data-id="${d.id}">Edit</button>
-          <button class="admin-btn admin-btn-sm admin-btn-danger dungeon-delete-btn" data-id="${d.id}">Del</button>
-        </td>
-      `;
+      const actions = readOnly
+        ? `<td class="admin-actions-cell"><button class="admin-btn admin-btn-sm dungeon-view-btn" data-id="${d.id}">View</button></td>`
+        : `<td class="admin-actions-cell">
+            <button class="admin-btn admin-btn-sm dungeon-edit-btn" data-id="${d.id}">Edit</button>
+            <button class="admin-btn admin-btn-sm admin-btn-danger dungeon-delete-btn" data-id="${d.id}">Del</button>
+          </td>`;
       return `<tr>
         <td>${escapeHtml(d.name)}</td>
         <td>${d.floors.length}</td>
@@ -41,7 +41,7 @@ export class DungeonsTab implements Tab {
     }).join('');
 
     const addBtn = readOnly ? '' : '<button class="admin-btn" id="dungeon-add-btn">+ Add Dungeon</button>';
-    const actionsHeader = readOnly ? '' : '<th>Actions</th>';
+    const actionsHeader = '<th>Actions</th>';
 
     container.innerHTML = `
       <div class="admin-page">
@@ -59,7 +59,7 @@ export class DungeonsTab implements Tab {
     `;
 
     container.querySelector('#dungeon-add-btn')?.addEventListener('click', () => this.openForm(null, ctx));
-    container.querySelectorAll<HTMLButtonElement>('.dungeon-edit-btn').forEach(btn => {
+    container.querySelectorAll<HTMLButtonElement>('.dungeon-edit-btn, .dungeon-view-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const dungeon = (ctx.getDisplayContent()?.dungeons ?? {})[btn.dataset.id!];
         if (dungeon) this.openForm(dungeon, ctx);
@@ -86,6 +86,7 @@ export class DungeonsTab implements Tab {
     const content = ctx.getDisplayContent();
     if (!content) return;
     const isNew = !dungeon;
+    const readOnly = ctx.isReadOnly();
     const d: DungeonDefinition = dungeon ?? {
       id: '',
       name: '',
@@ -117,7 +118,7 @@ export class DungeonsTab implements Tab {
     const floorRows = d.floors.map((f, i) => this.floorRowHtml(i, f, encounters, items)).join('');
     const firstClearRows = (d.firstClearRewards ?? []).map((r, i) => this.rewardRowHtml('df-first-clear', i, r, items)).join('');
 
-    const bodyHtml = `
+    const formHtml = `
       <input type="hidden" id="df-id" value="${escapeHtml(d.id)}">
       <div class="admin-form-grid">
         <label>Name<input type="text" id="df-name" value="${escapeHtml(d.name)}"></label>
@@ -125,7 +126,7 @@ export class DungeonsTab implements Tab {
       <label>Description<textarea id="df-description" rows="2">${escapeHtml(d.description ?? '')}</textarea></label>
 
       <fieldset class="admin-form-fieldset">
-        <legend>Floors <button class="admin-btn admin-btn-sm" id="df-add-floor" type="button">+ Floor</button></legend>
+        <legend>Floors ${readOnly ? '' : '<button class="admin-btn admin-btn-sm" id="df-add-floor" type="button">+ Floor</button>'}</legend>
         <div id="df-floor-list">${floorRows}</div>
       </fieldset>
 
@@ -153,18 +154,29 @@ export class DungeonsTab implements Tab {
       </fieldset>
 
       <fieldset class="admin-form-fieldset">
-        <legend>First-Clear Rewards <button class="admin-btn admin-btn-sm" id="df-add-first-clear" type="button">+ Reward</button></legend>
+        <legend>First-Clear Rewards ${readOnly ? '' : '<button class="admin-btn admin-btn-sm" id="df-add-first-clear" type="button">+ Reward</button>'}</legend>
         <div id="df-first-clear-list">${firstClearRows}</div>
       </fieldset>
-
-      <div class="admin-modal-actions">
-        <button class="admin-btn" id="df-save" type="button">${isNew ? 'Add' : 'Save'}</button>
-        <button class="admin-btn admin-btn-secondary" id="df-cancel" type="button">Cancel</button>
-      </div>
     `;
 
+    const actionsHtml = readOnly
+      ? `<div class="admin-modal-actions admin-modal-actions-readonly">
+          <span class="admin-form-hint admin-modal-readonly-hint">* Create a new draft to edit</span>
+          <button class="admin-btn admin-btn-secondary" id="df-cancel" type="button">Close</button>
+        </div>`
+      : `<div class="admin-modal-actions">
+          <button class="admin-btn" id="df-save" type="button">${isNew ? 'Add' : 'Save'}</button>
+          <button class="admin-btn admin-btn-secondary" id="df-cancel" type="button">Cancel</button>
+        </div>`;
+
+    // <fieldset disabled> cascades the disabled state to every nested input/select/textarea/button.
+    const bodyHtml = readOnly
+      ? `<fieldset class="admin-form-readonly-wrap" disabled>${formHtml}</fieldset>${actionsHtml}`
+      : `${formHtml}${actionsHtml}`;
+
+    const titlePrefix = isNew ? 'Add' : (readOnly ? 'View' : 'Edit');
     const modal = openModal({
-      title: isNew ? 'Add Dungeon' : `Edit: ${d.name}`,
+      title: isNew ? 'Add Dungeon' : `${titlePrefix}: ${d.name}`,
       bodyHtml,
       width: '880px',
     });

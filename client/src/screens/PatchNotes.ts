@@ -1,5 +1,11 @@
 export const PATCH_NOTES: { version: string; notes: string[] }[] = [
   {
+    version: '2026.05.09.4',
+    notes: [
+      'Admin: every content list (Dungeons, Shops, Sets, Monsters, Items, Zones, Encounters, Tile Types) now has a View action when on a read-only version. Opens the same form, fully populated, but disabled — true CRUD with Read separated from Update. Read-only view footer shows "* Create a new draft to edit"',
+    ],
+  },
+  {
     version: '2026.05.09.3',
     notes: [
       'Admin: new "⚡ Live (deployed)" entry at the top of the version selector — view the actual live world, monsters, items, etc. without creating a draft. Read-only. Clicking + New Draft while on Live snapshots the live state into a fresh editable draft',

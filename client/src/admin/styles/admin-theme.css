@@ -765,6 +765,8 @@ body.admin-modal-open { overflow: hidden; }
   gap: var(--admin-gap);
   margin-top: var(--admin-gap-loose);
 }
+.admin-modal-actions-readonly { justify-content: space-between; align-items: center; }
+.admin-modal-readonly-hint { font-style: italic; color: var(--admin-text-muted); }
 
 /* ---- Detail list ---- */
 .admin-detail-list {
