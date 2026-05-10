@@ -42,12 +42,16 @@ export {
   UNKNOWN_CLASS_ICON,
   SERVER_ICON,
   ALL_CLASS_NAMES,
+  CRAFT_SKILL_NAMES,
+  getCraftSkillName,
   MAX_GOLD,
   xpForNextLevel,
+  xpForCraftLevel,
   calculateMaxHp,
   calculateBaseDamage,
   createCharacter,
   addXp,
+  addCraftXp,
   addGold,
 } from './systems/CharacterStats.js';
 export type {

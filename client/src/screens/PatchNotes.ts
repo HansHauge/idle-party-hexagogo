@@ -1,5 +1,15 @@
 export const PATCH_NOTES: { version: string; notes: string[] }[] = [
   {
+    version: '2026.05.10.2',
+    notes: [
+      'Crafting skill! Each class now has its own craft skill (Knight=Smithing, Archer=Fletching, Priest=Inscription, Mage=Alchemy, Bard=Tinkering). Each finished craft grants XP toward your skill level',
+      'Skill level + XP bar shown at the top of the Craft tab — watch it tick up as your queue completes',
+      'Mage gets a starter Alchemy recipe: Brew Lesser Red Potion (consumable — no effect yet, full potion system coming soon)',
+      'Items can now be configured in the admin as consumables with custom emoji + color (potions etc.). Tooltip on consumables reads "Not usable yet — coming soon!" until the consumables framework lands',
+      'New admin Recipes tab — author/edit/delete recipes without touching JSON',
+    ],
+  },
+  {
     version: '2026.05.10.1',
     notes: [
       'New: Crafting tab! Unlocks at level 20. Each class has a starter recipe, plus one shared recipe anyone can use',

@@ -41,6 +41,9 @@ import {
   getActiveJobProgress,
   getVisibleRecipes,
   CRAFTING_UNLOCK_LEVEL,
+  addCraftXp,
+  xpForCraftLevel,
+  getCraftSkillName,
 } from '@idle-party-rpg/shared';
 import type {
   ServerStateMessage,
@@ -373,6 +376,8 @@ export class PlayerSession {
         inventory: { ...this.character.inventory },
         equipment: { ...this.character.equipment },
         xpRate: { startTime: this.xpRateStartTime, totalXp: this.xpRateXpTotal },
+        craftLevel: this.character.craftLevel,
+        craftXp: this.character.craftXp,
       };
     }
 
@@ -409,12 +414,31 @@ export class PlayerSession {
     const visible = getVisibleRecipes(recipes, this.character.className);
     const unlockLevel = CRAFTING_UNLOCK_LEVEL;
     const unlocked = this.character.level >= unlockLevel;
+
+    // Collect every item def referenced by visible recipes (ingredients + results), so the
+    // client can show readable names even for items the player doesn't own yet.
+    const allItems = this.content.getAllItems();
+    const itemDefs: Record<string, ItemDefinition> = {};
+    for (const recipe of visible) {
+      const resultDef = allItems[recipe.result.itemId];
+      if (resultDef) itemDefs[recipe.result.itemId] = resultDef;
+      for (const ing of recipe.ingredients) {
+        const ingDef = allItems[ing.itemId];
+        if (ingDef) itemDefs[ing.itemId] = ingDef;
+      }
+    }
+
     return {
       unlocked,
       unlockLevel,
       recipes: visible,
       queue: { activeStartedAtMs: this.craftQueue.activeStartedAtMs, jobs: [...this.craftQueue.jobs] },
       activeProgress: getActiveJobProgress(recipes, this.craftQueue, now),
+      skillName: getCraftSkillName(this.character.className),
+      skillLevel: this.character.craftLevel,
+      skillXp: this.character.craftXp,
+      skillXpForNext: xpForCraftLevel(this.character.craftLevel),
+      itemDefs,
     };
   }
 
@@ -426,6 +450,7 @@ export class PlayerSession {
     const items = this.content.getAllItems();
     const events = processCompletions(recipes, this.character.inventory, this.craftQueue, now);
     if (events.length === 0) return false;
+    let totalCraftXp = 0;
     for (const ev of events) {
       const itemDef = items[ev.resultItemId];
       const itemName = itemDef?.name ?? ev.resultItemId;
@@ -435,6 +460,15 @@ export class PlayerSession {
       }
       if (ev.quantityLost > 0) {
         this.addLogEntry(`Crafted ${itemName} but inventory full — lost ${ev.quantityLost}.`, 'damage');
+      }
+      const recipe = recipes[ev.recipeId];
+      if (recipe?.xpReward) totalCraftXp += recipe.xpReward;
+    }
+    if (totalCraftXp > 0) {
+      const skillName = getCraftSkillName(this.character.className);
+      const result = addCraftXp(this.character, totalCraftXp);
+      if (result.leveledUp) {
+        this.addLogEntry(`${skillName} reached level ${this.character.craftLevel}!`, 'levelup');
       }
     }
     return true;
@@ -769,6 +803,8 @@ export class PlayerSession {
         equipment: { ...this.character.equipment },
         skillLoadout: { ...this.character.skillLoadout },
         skillPoints: this.character.skillPoints,
+        craftLevel: this.character.craftLevel,
+        craftXp: this.character.craftXp,
       } : undefined,
       friends: [...this.friends],
       outgoingFriendRequests: [...this.outgoingFriendRequests],
@@ -855,6 +891,8 @@ export class PlayerSession {
           : { head: null, shoulders: null, chest: null, bracers: null, gloves: null, mainhand: null, offhand: null, foot: null, ring: null, necklace: null, back: null, relic: null },
         skillLoadout,
         skillPoints,
+        craftLevel: data.character.craftLevel ?? 1,
+        craftXp: data.character.craftXp ?? 0,
       };
     } else {
       // Invalid or legacy class — no character (will force class selection on login)

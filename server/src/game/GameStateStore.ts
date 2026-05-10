@@ -20,6 +20,8 @@ export interface PlayerSaveData {
     equipment?: Record<string, string | null>;
     skillLoadout?: SkillLoadout;
     skillPoints?: number;
+    craftLevel?: number;
+    craftXp?: number;
     // Legacy fields (ignored on load, kept for backward compat with old saves)
     stats?: Record<string, number>;
     priorityStat?: string | null;

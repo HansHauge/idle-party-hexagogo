@@ -22,6 +22,8 @@ export interface RecipeDefinition {
   /** Defaults to CRAFTING_UNLOCK_LEVEL when omitted. */
   requiredLevel?: number;
   durationSeconds: number;
+  /** Craft skill XP granted on completion. Default 0 if omitted. */
+  xpReward?: number;
   ingredients: RecipeIngredient[];
   result: RecipeResult;
 }
@@ -223,6 +225,7 @@ export const SEED_RECIPES: Record<string, RecipeDefinition> = {
     classRestriction: ['Knight'],
     requiredLevel: CRAFTING_UNLOCK_LEVEL,
     durationSeconds: 60,
+    xpReward: 15,
     ingredients: [{ itemId: 'mangy_pelt', quantity: 5 }],
     result: { itemId: 'leather_vest', quantity: 1 },
   },
@@ -233,6 +236,7 @@ export const SEED_RECIPES: Record<string, RecipeDefinition> = {
     classRestriction: ['Archer'],
     requiredLevel: CRAFTING_UNLOCK_LEVEL,
     durationSeconds: 60,
+    xpReward: 15,
     ingredients: [{ itemId: 'mangy_pelt', quantity: 3 }],
     result: { itemId: 'short_bow', quantity: 1 },
   },
@@ -243,6 +247,7 @@ export const SEED_RECIPES: Record<string, RecipeDefinition> = {
     classRestriction: ['Priest'],
     requiredLevel: CRAFTING_UNLOCK_LEVEL,
     durationSeconds: 60,
+    xpReward: 15,
     ingredients: [{ itemId: 'mangy_pelt', quantity: 4 }],
     result: { itemId: 'prayer_beads', quantity: 1 },
   },
@@ -253,8 +258,21 @@ export const SEED_RECIPES: Record<string, RecipeDefinition> = {
     classRestriction: ['Mage'],
     requiredLevel: CRAFTING_UNLOCK_LEVEL,
     durationSeconds: 60,
+    xpReward: 15,
     ingredients: [{ itemId: 'mangy_pelt', quantity: 4 }],
     result: { itemId: 'gnarled_wand', quantity: 1 },
+  },
+  // Mage Alchemy starter: brews a basic potion (consumable; not usable yet)
+  brew_lesser_red_potion: {
+    id: 'brew_lesser_red_potion',
+    name: 'Brew Lesser Red Potion',
+    description: 'Distill a basic red brew from a tattered pelt.',
+    classRestriction: ['Mage'],
+    requiredLevel: CRAFTING_UNLOCK_LEVEL,
+    durationSeconds: 30,
+    xpReward: 10,
+    ingredients: [{ itemId: 'mangy_pelt', quantity: 1 }],
+    result: { itemId: 'lesser_red_potion', quantity: 1 },
   },
   tin_whistle_craft: {
     id: 'tin_whistle_craft',
@@ -263,6 +281,7 @@ export const SEED_RECIPES: Record<string, RecipeDefinition> = {
     classRestriction: ['Bard'],
     requiredLevel: CRAFTING_UNLOCK_LEVEL,
     durationSeconds: 60,
+    xpReward: 15,
     ingredients: [{ itemId: 'mangy_pelt', quantity: 4 }],
     result: { itemId: 'tin_whistle', quantity: 1 },
   },
@@ -272,6 +291,7 @@ export const SEED_RECIPES: Record<string, RecipeDefinition> = {
     description: 'Patch together a cloak from spare hides.',
     requiredLevel: CRAFTING_UNLOCK_LEVEL,
     durationSeconds: 30,
+    xpReward: 5,
     ingredients: [{ itemId: 'mangy_pelt', quantity: 2 }],
     result: { itemId: 'moth_eaten_cloak', quantity: 1 },
   },

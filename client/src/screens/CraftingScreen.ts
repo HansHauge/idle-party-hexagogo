@@ -9,6 +9,24 @@ function injectCraftingStyles(): void {
   style.id = 'crafting-screen-styles';
   style.textContent = `
     .craft-screen { padding: 12px; display: flex; flex-direction: column; gap: 14px; }
+    .craft-skill-header {
+      display: flex; flex-direction: column; gap: 4px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;
+      background: rgba(0,0,0,0.25);
+    }
+    .craft-skill-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .craft-skill-name { font-size: 0.95em; font-weight: 600; letter-spacing: 1px; }
+    .craft-skill-level { font-size: 0.8em; opacity: 0.85; }
+    .craft-skill-xpbar {
+      height: 8px; border-radius: 4px; overflow: hidden;
+      background: rgba(255,255,255,0.08);
+    }
+    .craft-skill-xpfill {
+      height: 100%; background: linear-gradient(90deg, #c9a64f, #f0d574);
+      transition: width 0.3s ease-out;
+    }
+    .craft-skill-xptext { font-size: 0.7em; opacity: 0.7; text-align: right; }
     .craft-locked {
       padding: 24px; text-align: center;
       border: 1px solid var(--panel-border, rgba(255,255,255,0.15));
@@ -41,11 +59,12 @@ function injectCraftingStyles(): void {
     .craft-cancel-btn:hover { background: rgba(200,100,100,0.6); }
     .craft-recipe-list { display: flex; flex-direction: column; gap: 8px; }
     .craft-recipe-card {
-      padding: 8px; background: rgba(255,255,255,0.04); border-radius: 4px;
-      display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+      padding: 10px; background: rgba(255,255,255,0.04); border-radius: 4px;
+      display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
     }
+    .craft-recipe-info { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
     .craft-recipe-name { font-size: 0.85em; }
-    .craft-recipe-meta { font-size: 0.7em; opacity: 0.75; margin-top: 2px; }
+    .craft-recipe-meta { font-size: 0.7em; opacity: 0.75; }
     .craft-recipe-ings { font-size: 0.7em; opacity: 0.85; }
     .craft-recipe-ing-missing { color: #f88; }
     .craft-recipe-result { font-size: 0.7em; opacity: 0.85; }
@@ -159,7 +178,7 @@ export class CraftingScreen implements Screen {
           <div class="craft-locked">
             <h3>Crafting locked</h3>
             <p>Reach level ${c.unlockLevel} to begin crafting.</p>
-            <p style="opacity:0.7;font-size:0.85em">You're level ${this.lastLevel}.</p>
+            <p style="opacity:0.7;font-size:0.85em">Current Level: ${this.lastLevel}</p>
           </div>
         </div>
       `;
@@ -168,6 +187,7 @@ export class CraftingScreen implements Screen {
 
     this.container.innerHTML = `
       <div class="craft-screen">
+        ${this.renderSkillHeader(c)}
         <section class="craft-section">
           <h3>Queue (${c.queue.jobs.length} / ${MAX_CRAFT_QUEUE})</h3>
           ${this.renderQueue(c)}
@@ -191,6 +211,22 @@ export class CraftingScreen implements Screen {
         if (Number.isFinite(idx)) this.gameClient.sendCraftCancel(idx);
       });
     });
+  }
+
+  private renderSkillHeader(c: ClientCraftingState): string {
+    const xpPct = c.skillXpForNext > 0
+      ? Math.min(100, Math.max(0, (c.skillXp / c.skillXpForNext) * 100))
+      : 0;
+    return `
+      <div class="craft-skill-header">
+        <div class="craft-skill-row">
+          <div class="craft-skill-name">${escapeHtml(c.skillName)}</div>
+          <div class="craft-skill-level">Level ${c.skillLevel}</div>
+        </div>
+        <div class="craft-skill-xpbar"><div class="craft-skill-xpfill" style="width:${xpPct}%"></div></div>
+        <div class="craft-skill-xptext">${c.skillXp} / ${c.skillXpForNext} XP</div>
+      </div>
+    `;
   }
 
   private renderQueue(c: ClientCraftingState): string {
@@ -238,30 +274,34 @@ export class CraftingScreen implements Screen {
     if (c.recipes.length === 0) {
       return `<div class="craft-queue-empty">No recipes available.</div>`;
     }
+    // Recipe-referenced item defs come from the server's craft state — covers items the
+    // player doesn't own yet. Fall back to owned itemDefinitions for safety.
+    const lookupItem = (id: string) => c.itemDefs[id] ?? this.lastItemDefs[id];
     const cards = c.recipes.map(recipe => {
       const ings = recipe.ingredients.map(ing => {
-        const def = this.lastItemDefs[ing.itemId];
+        const def = lookupItem(ing.itemId);
         const name = def?.name ?? ing.itemId;
         const have = this.lastInventory[ing.itemId] ?? 0;
         const enough = have >= ing.quantity;
         const cls = enough ? '' : 'craft-recipe-ing-missing';
         return `<span class="${cls}">${escapeHtml(name)} ${have}/${ing.quantity}</span>`;
       }).join(', ');
-      const resultDef = this.lastItemDefs[recipe.result.itemId];
+      const resultDef = lookupItem(recipe.result.itemId);
       const resultName = resultDef?.name ?? recipe.result.itemId;
       const resultStr = recipe.result.quantity > 1 ? `${resultName} ×${recipe.result.quantity}` : resultName;
       const classTag = recipe.classRestriction && recipe.classRestriction.length > 0
         ? `<span class="craft-class-tag">${escapeHtml(recipe.classRestriction.join('/'))}</span>` : '';
+      const xpStr = recipe.xpReward && recipe.xpReward > 0 ? ` · ${recipe.xpReward} XP` : '';
       const check = canQueueRecipe(recipe, this.lastInventory, c.queue, this.lastClassName, this.lastLevel);
       const disabled = !check.ok;
       const reason = !check.ok ? this.reasonText(check.reason) : '';
       return `
         <div class="craft-recipe-card">
-          <div>
+          <div class="craft-recipe-info">
             <div class="craft-recipe-name">${escapeHtml(recipe.name)}${classTag}</div>
-            <div class="craft-recipe-meta">${fmtSeconds(recipe.durationSeconds)}</div>
+            <div class="craft-recipe-meta">Crafting Time: ${fmtSeconds(recipe.durationSeconds)}${xpStr}</div>
             <div class="craft-recipe-ings">Cost: ${ings}</div>
-            <div class="craft-recipe-result">→ ${escapeHtml(resultStr)}</div>
+            <div class="craft-recipe-result">Produces: ${escapeHtml(resultStr)}</div>
           </div>
           <button class="craft-queue-btn" data-recipe-id="${escapeHtml(recipe.id)}" ${disabled ? 'disabled' : ''} title="${escapeHtml(reason)}">Queue</button>
         </div>
