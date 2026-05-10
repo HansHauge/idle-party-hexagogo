@@ -1,5 +1,17 @@
 export const PATCH_NOTES: { version: string; notes: string[] }[] = [
   {
+    version: '2026.05.09.3',
+    notes: [
+      'Admin: new "⚡ Live (deployed)" entry at the top of the version selector — view the actual live world, monsters, items, etc. without creating a draft. Read-only. Clicking + New Draft while on Live snapshots the live state into a fresh editable draft',
+    ],
+  },
+  {
+    version: '2026.05.09.2',
+    notes: [
+      'Admin: rooms can now be linked to a dungeon via a new Dungeon dropdown in the Map editor sidebar. Stored as `dungeonId` on the world tile. Admin link only — entering a dungeon from the room is not yet wired',
+    ],
+  },
+  {
     version: '2026.05.09.1',
     notes: [
       'Admin: new Dungeons tab — define dungeons with floors, grid shape, encounter tables, entry requirements (level, item, classes, party size), per-floor rewards, and first-clear rewards. Persists to data/dungeons.json via ContentStore and is included in version snapshots. No game-side runtime yet — wiring follows in a later release',
