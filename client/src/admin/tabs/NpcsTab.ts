@@ -4,6 +4,14 @@ import type { NpcDefinition } from '@idle-party-rpg/shared';
 import { escapeHtml, putAdmin, deleteAdmin } from '../api';
 import { openModal } from '../components/Modal';
 
+const EMOJI_PALETTE = [
+  '🧙', '🧝', '🧛', '🧚', '🧞', '🧟', '🧜', '🦸', '🦹', '🥷',
+  '👑', '🤴', '👸', '💂', '🕵️', '🧑‍🌾', '🧑‍🍳', '🧑‍⚕️', '🧑‍🏫', '🧑‍🔬',
+  '🧑‍🎨', '🧑‍🚒', '🧑‍⚖️', '🧑‍💼', '🧑‍🔧', '🧑‍🎤', '🤺', '🏴‍☠️', '🧌', '👹',
+  '👺', '👻', '💀', '☠️', '👽', '🤖', '😈', '🤡', '🧓', '👴',
+  '👵', '⚔️', '🛡️', '🏹', '🔮', '📜', '🗝️', '⚒️', '🐉', '🦄',
+];
+
 export class NpcsTab implements Tab {
   render(container: HTMLElement, ctx: AdminContext): void {
     const content = ctx.getDisplayContent();
@@ -82,11 +90,19 @@ export class NpcsTab implements Tab {
         `).join('')
       : '<div class="admin-form-hint">No quests defined yet. Create some on the Quests tab.</div>';
 
+    const paletteButtons = EMOJI_PALETTE.map(e => `
+      <button type="button" class="npcf-emoji-pick" data-emoji="${escapeHtml(e)}" title="${escapeHtml(e)}"
+        style="font-size:1.3em;padding:4px 6px;background:var(--admin-panel);border:1px solid var(--admin-border);border-radius:var(--admin-radius-sm);cursor:pointer;line-height:1;">${escapeHtml(e)}</button>
+    `).join('');
+
     const bodyHtml = `
       <input type="hidden" id="npcf-id" value="${escapeHtml(n.id)}">
       <div class="admin-form-grid">
         <label>Name<input type="text" id="npcf-name" value="${escapeHtml(n.name)}"></label>
         <label>Emoji<input type="text" id="npcf-emoji" value="${escapeHtml(n.emoji)}" maxlength="8" placeholder="🧙"></label>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin:-8px 0 var(--admin-gap-loose) 0;">
+        ${paletteButtons}
       </div>
       <label>Greeting
         <textarea id="npcf-greeting" rows="3" placeholder="What this NPC says when you talk to them.">${escapeHtml(n.greeting)}</textarea>
@@ -109,6 +125,13 @@ export class NpcsTab implements Tab {
 
     root.querySelector('#npcf-cancel')?.addEventListener('click', modal.close);
     root.querySelector('#npcf-save')?.addEventListener('click', () => this.saveForm(root, ctx, modal.close));
+
+    const emojiInput = root.querySelector<HTMLInputElement>('#npcf-emoji');
+    root.querySelectorAll<HTMLButtonElement>('.npcf-emoji-pick').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (emojiInput) emojiInput.value = btn.dataset.emoji ?? '';
+      });
+    });
   }
 
   private async saveForm(root: HTMLElement, ctx: AdminContext, close: () => void): Promise<void> {
