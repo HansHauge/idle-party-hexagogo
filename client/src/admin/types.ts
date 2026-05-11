@@ -9,6 +9,7 @@ import type {
   TileTypeDefinition,
   NpcDefinition,
   QuestDefinition,
+  DungeonDefinition,
 } from '@idle-party-rpg/shared';
 
 export interface OverviewData {
@@ -54,6 +55,7 @@ export interface ContentData {
   tileTypes: Record<string, TileTypeDefinition>;
   npcs: Record<string, NpcDefinition>;
   quests: Record<string, QuestDefinition>;
+  dungeons: Record<string, DungeonDefinition>;
   world: WorldData;
 }
 
@@ -79,6 +81,7 @@ export type TabId =
   | 'zones'
   | 'encounters'
   | 'tile-types'
+  | 'dungeons'
   | 'map'
   | 'versions'
   | 'xp-table';
@@ -101,6 +104,7 @@ export const TABS: TabDef[] = [
   { id: 'zones',      label: 'Zones',      icon: '○' },
   { id: 'encounters', label: 'Encounters', icon: '⚔' },
   { id: 'tile-types', label: 'Tile Types', icon: '■' },
+  { id: 'dungeons',   label: 'Dungeons',   icon: '⛬' },
   { id: 'map',        label: 'Map',        icon: '⌖' },
   { id: 'versions',   label: 'Versions',   icon: '⧉' },
   { id: 'xp-table',   label: 'XP Table',   icon: '✨' },
